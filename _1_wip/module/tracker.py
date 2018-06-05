@@ -17,7 +17,7 @@ class TRACKER(object):
     - www.youtube.com/watch?v=vWY8YUayf9Q&feature=youtu.be
     - SDCNP, Lesson 15 Advanced Lane Finding, "34. Sliding Window Search"
     '''
-    def __init__(self, Mywindow_width = 50, Mywindow_height = 80, Mymargin = 100, My_ym = 1, My_xm = 1, Mysmooth_factor = 15):
+    def __init__(self, Mywindow_width = 50, Mywindow_height = 80, Mymargin = 100, My_ym = 10/720, My_xm = 3.7/812, Mysmooth_factor = 15):
         self.recent_centers = []                # list that stores all the past (left, right) center set values used for smoothing the output
         self.window_width   = Mywindow_width    # the window pixel width of the center values, used to count pixels inside center windows to determine curve values
         self.window_height  = Mywindow_height   # the window pixel height of the center values, used to count pixels inside center windows to determine curve values
@@ -42,7 +42,7 @@ class TRACKER(object):
         #self.res_yvals      = None
 
 
-    def check_variation_x(self, lane, clearance=20):
+    def check_shift_x(self, lane, clearance=20):
         a0 = [lane[i] - lane[i + 1] for i in range(len(lane) - 1)]  # diff between x(i) & x(i+1)
         a1 = [0 if (np.sign(a0[i]) == np.sign(a0[i + 1]) or a0[i] == 0) and abs(a0[i + 1]) < clearance else 1 for i in range(len(a0) - 1)]
         if sum(a1) == 0:
@@ -54,6 +54,14 @@ class TRACKER(object):
         a = [wc[i][1] - wc[i][0] for i in range(len(wc))]
         b = a - min(a)
         if max(b) < clearance:
+            return True
+        else:
+            return False
+
+    def check_grad_wc(self, window_centroids, clearance=20):
+        a = np.gradient(window_centroids, axis=1)[:, 0]
+        b = max(abs(np.gradient(a)))
+        if b < clearance:
             return True
         else:
             return False
@@ -98,15 +106,10 @@ class TRACKER(object):
 
         # store the (left, right) center set values and return averaged values of line centers
         check1 = len(window_centroids) > 0 #print(np.array(window_centroids)[:,0])
-        check2 = self.check_variation_x(np.array(window_centroids)[:,0], clearance=50)
-        check3 = self.check_variation_x(np.array(window_centroids)[:,1], clearance=50)
-        check4 = image.shape[0]*.825 > np.max(np.array(window_centroids)[:,1]) - np.min(np.array(window_centroids)[:,0]) > image.shape[0]*.625
-        check5 = self.check_shift_lane_width(window_centroids, clearance=100)
 
         count = 0
         if count > self.timer:
-            #if check1 and check2 and check3: # If we found any window centers
-            if check1 and check3 and check5:
+            if check1:
                 self.recent_centers.append(window_centroids)
         else:
             self.recent_centers.append(window_centroids)
@@ -181,7 +184,7 @@ class TRACKER(object):
 
 
     def curvature(self, height, lane_x):
-        x, y = lane_x, np.linspace(0, height-1, num=len(lane_x))
+        x, y = lane_x[:,0], lane_x[:,1] # np.linspace(0, height-1, num=len(lane_x))
         curve_fit_cr = np.polyfit(y * self.ym_per_pix, x * self.xm_per_pix, 2)
         return ((1 + (2 * curve_fit_cr[0] * height * self.ym_per_pix + curve_fit_cr[1]) ** 2) ** 1.5) / np.absolute(2 * curve_fit_cr[0])
 
@@ -220,11 +223,16 @@ class TRACKER(object):
         center_diff, side_pos = self.camera_offset(width, left_fitx, right_fitx)
 
         # draw the text showing curvature, offset, and speed
-        curverad = self.curvature(height, leftx)
+        curverad = self.curvature(height, left_lane)
         cv2.putText(result, 'Radius of Curvature = ' + str(int(curverad)) + ' m', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
         cv2.putText(result, 'Vehicle is ' + str(abs(round(center_diff, 3))) + ' m ' + side_pos + ' of center', (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
         return result
+
+    # def curvature(self, height, lane_x):
+    #     x, y = lane_x, np.linspace(0, height - 1, num=len(lane_x))
+    #     curve_fit_cr = np.polyfit(y * self.ym_per_pix, x * self.xm_per_pix, 2)
+    #     return ((1 + (2 * curve_fit_cr[0] * height * self.ym_per_pix + curve_fit_cr[1]) ** 2) ** 1.5) / np.absolute(2 * curve_fit_cr[0])
 
     # def curvature(self, inner_lane):
     #     dx_dt = np.gradient(inner_lane[:, 0]* self.xm_per_pix)
