@@ -24,6 +24,15 @@ def check_grad_lane(left_lane,right_lane, xm_per_pix, clearance=0.3, trigger=0.5
     else:
         return False
 
+def check_curve_parallel():
+    '''
+    1. select one point, pt_left_i, from the left lane
+    2. get the normal to the left curve at this point
+    3. find the intersection between the normal and the right lane, pt_right_i
+    4. compare the tangent of the both curves, at the two points, pt_left_i and pt_right_i
+    5. if the tangents are similar, then the curves are parallel at these points
+    '''
+    pass
 
 # ----------------------------------------------------------------
 def check_shift_lane_width(wc, clearance=200):
@@ -52,7 +61,15 @@ def check_grad_wc(window_centroids, clearance=20):
 
 
 '''
-Checking that they have similar curvature
-Checking that they are separated by approximately the right distance horizontally
-Checking that they are roughly parallel
+#DONE: Checking that they have similar curvature
+#DONE: Checking that they are separated by approximately the right distance horizontally
+* Checking that they are roughly parallel:
+  . so derivative in two points have to be about the same
+  . I used this difference of derivatives as a sanity check
+* If the change in coefficient is above 0.005, the lanes are discarded
+* Outlier removal 2:
+  . If any lane was found with less than 5 pixels, we use the previous line fit coefficients as the coefficients for the current one.
+Smoothing: We smooth the value of the current lane using a first order filter response, as \\(coeffs = 0.95*coeff~prev+ 0.05 coeff\\).
+
+
 '''
