@@ -1,4 +1,5 @@
 from step0 import PARSE_ARGS
+import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
 import cv2
@@ -6,7 +7,7 @@ import glob
 import pickle
 
 # parameter
-directory = 'D:/USER/_PROJECT_/_PRJ04_/_1_WIP/_1_forge/_4_v3/'
+directory = 'D:/USER/_PROJECT_/_PRJ04_/_1_WIP/_1_forge/_5_v4/'
 args = PARSE_ARGS(path=directory)
 
 # Helper function:
@@ -148,8 +149,58 @@ def combine_threshold(args, image, stacked_image = False, region = True ): # ver
 
 
 def main():
-    pass
+    # parameter
+    directory = 'D:/USER/_PROJECT_/_PRJ04_/_1_WIP/_1_forge/_3_retro/'
+    args = PARSE_ARGS(path=directory)
+    # choose a Sobel kernel size
+    ksize = 3
+    # read images
+    image        = mpimg.imread(args.sand+'signs_vehicles_xygrad.jpg')
+    img_solution = mpimg.imread(args.sand+'binary-combo-example.jpg')
+    # apply each of the thresholding functions
+    gradx = gradient_sobel_abs(image, orient='x', sobel_kernel=ksize, thresh=(20, 100))
+    grady = gradient_sobel_abs(image, orient='y', sobel_kernel=ksize, thresh=(20, 100))
+    mag_binary = gradient_magnitude(image, sobel_kernel=ksize, thresh=(20, 100))
+    dir_binary = gradient_direction(image, sobel_kernel=15, thresh=(0.7, 1.3))
+    
+    # combine thresholds
+    combined1, combined2, combined3, combined4, combined5, combined6, combined7 = [np.zeros_like(dir_binary) for i in range(7)]
+    combined1[((gradx == 1) & (grady == 1))] = 1
+    combined2[((mag_binary == 1) & (dir_binary == 1))] = 1
+    combined3[((gradx == 1) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1))] = 1
+    combined4[((gradx == 1) & (grady == 1) & (mag_binary == 1))] = 1
+    combined5[((gradx == 1) & (grady == 1) | (mag_binary == 1))] = 1
+    combined6[((gradx == 1) & (grady == 1) & (dir_binary == 1))] = 1
+    combined7[((gradx == 1) & (grady == 1) | (dir_binary == 1))] = 1
 
+    # plot the result
+    row, column = [12, 2]
+    figure, axes = plt.subplots(row, column, figsize=(15, 50))
+    figure.tight_layout()
+    expected_result  = ['Expected result', img_solution]
+    list_title_image = [['Original Image',image],
+                        ['gradx', gradx],
+                        ['grady', grady],
+                        ['mag_binary', mag_binary],
+                        ['dir_binary', dir_binary],                        
+                        ['comb1: gradx & grady', combined1],
+                        ['comb2: mag_binary & dir_binary', combined2],
+                        ['comb3: <gradx & grady> OR <dir_bin & mag_bin> ', combined3],
+                        ['comb4: gradx & grady & mag_binary', combined4],
+                        ['comb5: gradx & grady | mag_binary', combined5],
+                        ['comb6: gradx & grady & dir_binary', combined6],
+                        ['comb7: gradx & grady | dir_binary', combined7] ]
 
+    count = 0
+    for i, ax in enumerate(axes.flatten()):
+        if i%2==0:            
+            ax.imshow(expected_result[1], cmap='gray')
+            ax.set_title(expected_result[0], fontsize=15)
+        else:
+            ax.imshow(list_title_image[count][1], cmap='gray')
+            ax.set_title(list_title_image[count][0], fontsize=15)    
+            count += 1 
+        ax.axis('off')           
+   
 if __name__ == '__main__':
     main()
