@@ -172,10 +172,11 @@ class TRACKER(object):
         x_left  = left_fit[0]*y_lane**2  + left_fit[1] *y_lane + left_fit[2]
         x_right = right_fit[0]*y_lane**2 + right_fit[1]*y_lane + right_fit[2]
 
-        left_lane  = np.column_stack(( x_left, y_lane ))
-        right_lane = np.column_stack(( x_right, y_lane ))
-        inner_lane = np.array(list(zip(np.concatenate((x_left + self.window_width / 2, x_right[::-1] - self.window_width / 2), axis=0),
-                                       np.concatenate((y_lane, y_lane[::-1]), axis=0))), np.int32)
+        #left_lane  = np.column_stack(( x_left, y_lane ))
+        #right_lane = np.column_stack(( x_right, y_lane ))
+        left_lane  = np.array(list(zip(np.concatenate(( x_left - self.window_width/2, x_left[::-1] + self.window_width/2), axis=0), np.concatenate(( y_lane, y_lane[::-1]), axis=0))), np.int32)
+        right_lane = np.array(list(zip(np.concatenate(( x_right - self.window_width/2, x_right[::-1] + self.window_width/2), axis=0), np.concatenate(( y_lane, y_lane[::-1]), axis=0))), np.int32)
+        inner_lane = np.array(list(zip(np.concatenate(( x_left + self.window_width / 2, x_right[::-1] - self.window_width / 2), axis=0), np.concatenate(( y_lane, y_lane[::-1]), axis=0))), np.int32)
 
         # draw the lane onto the image_warped blank image
         road     = np.zeros_like(image)

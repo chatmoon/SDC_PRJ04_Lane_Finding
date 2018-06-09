@@ -14,18 +14,17 @@ import glob
 from math import isclose
 import pandas as pd
 global d
+d = []
 
 # parameter
-directory = 'D:/USER/_PROJECT_/_PRJ04_/_1_WIP/_1_forge/_5_v4/'
+#directory = 'D:/USER/_PROJECT_/_PRJ04_/_1_WIP/_1_forge/_5_v4/'
+directory = 'D:/USER/_PROJECT_/_PRJ04_/_1_WIP/_2_github/_1_wip/'
 args      = PARSE_ARGS(path=directory)
 
 # return the camera matrix, distortion coefficients
 camera = camera_calibrate(args)
 mtx    = camera['camera_matrix']
 dist   = camera['coef_distorsion']
-
-d = []
-
 
 def process_image(image):
     # image: width, height
@@ -39,7 +38,7 @@ def process_image(image):
 
     # find lane lines
     # (yvals, res_yvals) = np.array(range(0, height)), np.arange(height - (window_height / 2), 0, -window_height)
-    line = TRACKER(window_width= 25,nwindows= 9, margin= 100, minpix= 50, xm= 3.7/812, ym= 10/720, smooth_factor= 15)
+    line = TRACKER(window_width=25,nwindows= 9, margin= 100, minpix= 50, xm= 3.7/812, ym= 10/720, smooth_factor= 15)
     ( left_fit, right_fit ) = line.find_lanes_next(image_warped)
 
 
